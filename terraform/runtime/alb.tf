@@ -39,7 +39,7 @@ resource "aws_vpc_security_group_egress_rule" "alb_to_tasks" {
 }
 
 resource "aws_lb" "this" {
-  # checkov:skip=CKV2_AWS_28:WAF association is a Phase 2 hardening step (see docs/DESIGN.md phasing); the skeleton ships without it.
+  # checkov:skip=CKV2_AWS_28:WAF association is planned hardening; the current setup ships without it.
   name                       = "${local.name}-alb"
   load_balancer_type         = "application"
   security_groups            = [aws_security_group.alb.id]

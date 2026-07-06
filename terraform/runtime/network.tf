@@ -31,7 +31,7 @@ resource "aws_flow_log" "this" {
 
 resource "aws_cloudwatch_log_group" "flow" {
   # checkov:skip=CKV_AWS_338:1-year retention is a cost/compliance decision deferred past the reference deployment.
-  # checkov:skip=CKV_AWS_158:A dedicated CMK for log groups is Phase 2 hardening; default encryption applies today.
+  # checkov:skip=CKV_AWS_158:A dedicated CMK for log groups is planned hardening; default encryption applies today.
   name              = "/${local.name}/vpc-flow-logs"
   retention_in_days = 90
 }

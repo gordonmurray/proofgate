@@ -6,7 +6,7 @@
 {"query": "how are requests routed to the search service", "relevant_ids": ["alb-01"], "notes": "listener rules"}
 {"query": "is traffic forced onto TLS", "relevant_ids": ["alb-00", "alb-03"], "notes": "HTTPS"}
 {"query": "what happens to in-flight requests during a deploy", "relevant_ids": ["alb-04"], "notes": "deregistration"}
-{"query": "why are there no servers to patch in phase 1", "relevant_ids": ["ecs-00"], "notes": "fargate"}
+{"query": "why are there no servers to patch", "relevant_ids": ["ecs-00"], "notes": "fargate"}
 {"query": "how does the service scale under load", "relevant_ids": ["ecs-03"], "notes": "autoscaling"}
 {"query": "where are the embedder and reranker selected", "relevant_ids": ["ecs-01"], "notes": "task def env"}
 {"query": "how is a new revision rolled out safely", "relevant_ids": ["ecs-02"], "notes": "rolling deploy"}

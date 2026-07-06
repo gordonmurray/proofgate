@@ -9,4 +9,4 @@ container_port    = 8080
 desired_count     = 2
 certificate_arn   = "arn:aws:acm:eu-west-1:<account>:certificate/<id>"
 github_repository = "gordonmurray/proofgate"
-embedder          = "local"  # 'bedrock' is Phase 1, once the Bedrock embedder is implemented
+embedder          = "local"  # 'bedrock' once the Bedrock embedder is implemented

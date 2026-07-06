@@ -240,7 +240,7 @@ class Retriever:
 
         This is fork #1's rerank seam. Today it is an identity pass (keeps the
         blended order) so the span and the ``rerank=true`` path are real and
-        traced; Phase 1 swaps in a Bedrock reranker behind this method.
+        traced; a Bedrock reranker can be swapped in behind this method later.
 
         Args:
             query: The original query (unused by the identity reranker).

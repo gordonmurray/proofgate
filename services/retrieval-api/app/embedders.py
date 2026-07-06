@@ -1,7 +1,7 @@
 """Query and document embedders.
 
 This is fork #1 from docs/DESIGN.md made concrete and config-selectable: Bedrock vs
-self-hosted inference. Phase 1 wires Bedrock; until then, and in CI where there
+self-hosted inference. Bedrock is wired in later; until then, and in CI where there
 are no cloud credentials, the ``local`` hashing embedder gives a deterministic,
 dependency-light vector so the whole retrieval path is exercisable offline.
 
@@ -86,9 +86,9 @@ class LocalHashingEmbedder:
 
 
 class BedrockEmbedder:
-    """Placeholder for the Phase 1 Bedrock embedder (fork #1).
+    """Placeholder for the Bedrock embedder (fork #1).
 
-    Deliberately not implemented: wiring live Bedrock is Phase 1 work and needs
+    Deliberately not implemented: wiring live Bedrock needs
     cloud credentials. It exists so ``PROOFGATE_EMBEDDER=bedrock`` is a real, selectable
     branch and so the seam is visible in the code today.
     """
@@ -96,9 +96,9 @@ class BedrockEmbedder:
     def __init__(self, dim: int = 1024) -> None:
         self.dim = dim
 
-    def embed(self, text: str) -> List[float]:  # pragma: no cover - Phase 1
+    def embed(self, text: str) -> List[float]:  # pragma: no cover - not yet implemented
         raise NotImplementedError(
-            "BedrockEmbedder arrives in Phase 1; set PROOFGATE_EMBEDDER=local for now."
+            "BedrockEmbedder is not yet implemented; set PROOFGATE_EMBEDDER=local."
         )
 
 

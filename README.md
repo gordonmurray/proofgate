@@ -1,23 +1,24 @@
 # proofgate
 
-**A reference deployment of a production retrieval system on AWS, defined entirely
-in code, that refuses to ship if retrieval quality or latency regresses.**
+proofgate is a reference deployment of a retrieval system on AWS, defined in
+Terraform and shipped through a gated CI pipeline. The pipeline includes an
+evaluation step that runs a versioned golden set against the deployed service and
+fails the build if retrieval quality or latency falls outside configured thresholds.
+A regression therefore cannot be promoted to production.
 
-Traditional infrastructure is up or down, so you gate deploys on health checks. A
-retrieval system can be *up and returning garbage* — so proofgate gates on **quality**.
-The eval gate is to this project what a compliance check is to an infrastructure
-showcase: the thing that makes "it deployed" mean "it deployed **and it is actually
-good**".
+The motivation is simple. Most infrastructure is either up or down, and a health
+check is enough to decide whether to ship. A retrieval system can pass every health
+check and still return poor results, so proofgate adds a quality check to the
+pipeline alongside the usual format, policy, build, and deploy steps.
 
-> **proofgate**: *no promotion without proof.* The project proves out **Firn**, the
-> S3-backed vector store at the centre of the runtime — and refuses to ship a build
-> that can't prove its quality at the gate.
+proofgate is also the harness used to develop and validate Firn, the S3-backed
+vector store on the request path.
 
----
+## Example
 
-## The idea in one screenshot
-
-Push a deliberately bad corpus and watch the pipeline refuse to promote it:
+The evaluation step runs the golden set against a live endpoint and compares recall
+and latency to the thresholds. Running it against a deliberately broken corpus makes
+it fail, which blocks promotion:
 
 ```
 === proofgate eval gate — http://127.0.0.1:8080 ===
@@ -30,82 +31,78 @@ p99: 210.85ms  p50: 127.32ms  (200 reqs)
 EVAL GATE FAILED — promotion blocked.   # exit 1
 ```
 
-The service is healthy the whole time. Health checks are green. Recall is not.
-See [docs/eval-gate-demo.md](docs/eval-gate-demo.md).
+The service stays healthy throughout; only recall drops. A full walkthrough is in
+[docs/eval-gate-demo.md](docs/eval-gate-demo.md).
 
----
+## Architecture
 
-## Architecture (three planes)
+The system is split into three Terraform modules.
 
-**Runtime — the request path**
+Runtime (the request path):
 
 ```
-Client -> ALB -> ECS Fargate: retrieval-api (orchestration)
-   |- embed query  -> local hashing embedder (phase 0/1)  OR  Bedrock (phase 1)
+Client -> ALB -> ECS Fargate: retrieval-api
+   |- embed query  -> local hashing embedder (default)  or  Bedrock (optional)
    |- vector + FTS -> Firn on S3 (foyer cache is internal to Firn)
-   |- rerank       -> identity (phase 0)  OR  Bedrock (phase 1)
+   |- rerank       -> identity (default)  or  Bedrock (optional)
  -> ranked response
 ```
 
-There is no separate cache tier. Caching lives **inside Firn** (foyer); the
-cache-hit-rate story is a Firn-internal property, not bolted-on infrastructure.
+There is no separate cache tier. Caching is handled inside Firn (foyer), so the
+cache-hit rate is a property of the store rather than a bolted-on service.
 
-**Delivery — GitHub Actions, gated**
+Delivery (GitHub Actions):
 
 ```
-1 validate/fmt   ruff + terraform fmt/validate     <- code + infra gate
-2 policy scan    checkov                            <- infra gate
+1 validate/fmt   ruff + terraform fmt/validate
+2 policy scan    checkov
 3 build          docker image
-4 apply          -> staging (guarded on AWS creds)
-5 eval gate      recall@10 + p99 SLO                <- QUALITY GATE (the point)
-6 promote        -> prod, only if 5 passes
+4 apply          staging (guarded on AWS credentials)
+5 eval gate      recall@10 + p99 SLO
+6 promote        prod, only if the eval gate passes
 ```
 
-**Observability**
+Observability:
 
 ```
 retrieval-api (OTel SDK) -> OTel Collector -> Amazon Managed Prometheus -> Grafana
-                                           -> Tempo OR FirnTel (phase 2 fork)
+                                           -> Tempo or FirnTel
 ```
 
-Eval-gate results are emitted as metrics, so retrieval quality is graphable over
-time — not just pass/fail in one CI run.
-
----
+Eval results are exported as metrics, so recall and latency can be tracked over time
+rather than only read from CI logs.
 
 ## Repository layout
 
 ```
 proofgate/
-  services/retrieval-api/   FastAPI orchestration service (OTel-first)
-  eval/                     the eval gate: golden set, thresholds, harness, generator
-  terraform/                three planes: runtime / delivery / observability
-  .github/workflows/        the gated pipeline
-  docs/                     the eval-gate demo walkthrough
+  services/retrieval-api/   FastAPI orchestration service, instrumented with OpenTelemetry
+  eval/                     golden set, thresholds, baseline, and the evaluation harness
+  terraform/                three modules: runtime, delivery, observability
+  .github/workflows/        the CI pipeline
+  docs/                     design notes and the eval walkthrough
 ```
-
----
 
 ## Quickstart
 
-Requires Python 3.11+. CLI tools (terraform, checkov) run via Docker — see
-[docs/DESIGN.md](docs/DESIGN.md) for the tooling convention.
+Requires Python 3.11 or newer. The Terraform and checkov commands run via Docker;
+see [docs/DESIGN.md](docs/DESIGN.md) for the tooling setup.
 
 ```bash
-make install          # install retrieval-api + dev deps
-make test             # unit tests (service + harness)
+make install          # install retrieval-api and dev dependencies
+make test             # unit tests (service and harness)
 make lint             # ruff
 
 # Run the service and the eval gate against it:
 make serve &          # http://127.0.0.1:8080
-make eval             # EVAL GATE PASSED
+make eval             # runs the golden set and reports pass/fail
 
-# Infra gates (Docker):
+# Infrastructure gates:
 make tf-validate
 make policy-scan
 ```
 
-Try a query:
+Query the running service:
 
 ```bash
 curl -s localhost:8080/search \
@@ -113,49 +110,41 @@ curl -s localhost:8080/search \
   -d '{"query": "what is the foyer cache", "k": 3}' | jq
 ```
 
----
-
 ## The eval gate
 
-- **Golden set** — [`eval/golden.jsonl`](eval/golden.jsonl), 50 queries against the
-  demo corpus, versioned and reviewed like code. One `{query, relevant_ids, notes}`
+- **Golden set** ([`eval/golden.jsonl`](eval/golden.jsonl)): 50 queries against the
+  demo corpus, versioned and reviewed like code, one `{query, relevant_ids, notes}`
   object per line.
-- **Metrics** — macro recall@10 against the golden set; p99 latency from a fixed,
+- **Metrics**: macro recall@10 against the golden set, and p99 latency from a fixed,
   repeatable warm load run.
-- **Thresholds** — [`eval/thresholds.toml`](eval/thresholds.toml): an absolute
-  recall floor, a max allowed drop versus the committed
-  [`baseline.json`](eval/baseline.json), and the p99 SLO in ms. The baseline moves
-  only via a deliberate PR — never auto-ratcheted from a passing run.
-- **Mechanics** — the harness runs the golden set through the real HTTP path,
-  writes `eval-report.json`, and exits non-zero on any breach; `promote` requires it.
-
----
+- **Thresholds** ([`eval/thresholds.toml`](eval/thresholds.toml)): an absolute recall
+  floor, a maximum allowed drop from the committed
+  [`baseline.json`](eval/baseline.json), and the p99 SLO in milliseconds. The baseline
+  is only changed through a deliberate pull request; it is not ratcheted automatically
+  from a passing run.
+- **Mechanics**: the harness runs the golden set over the real HTTP path, writes
+  `eval-report.json`, and exits non-zero on any breach. The promote job depends on it.
 
 ## Configuration
 
-The same image runs staging and prod; behaviour is driven by the environment.
+The same image runs in staging and production; behaviour comes from the environment.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `PROOFGATE_CORPUS_PATH` | bundled `demo.jsonl` | Corpus to index at startup |
-| `PROOFGATE_EMBEDDER` | `local` | Embedder fork: `local` or `bedrock` |
-| `PROOFGATE_RERANKER` | `none` | Reranker fork: `none` or `bedrock` |
+| `PROOFGATE_EMBEDDER` | `local` | Embedder: `local` or `bedrock` |
+| `PROOFGATE_RERANKER` | `none` | Reranker: `none` or `bedrock` |
 | `PROOFGATE_ENV` | `local` | Environment label |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | *(unset)* | When set, spans export over OTLP |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | *(unset)* | When set, spans are exported over OTLP |
 
-Two forks are kept addressable via config rather than decided prematurely:
-Bedrock vs self-hosted inference, and Tempo vs FirnTel for traces.
+Two choices are left configurable rather than fixed in code: Bedrock versus
+self-hosted inference, and Tempo versus FirnTel for traces.
 
----
+## Status
 
-## Phasing
+The current code runs retrieval-api against a local corpus, with the eval gate live
+and able to fail, the three Terraform modules validating, and the pipeline green in
+GitHub Actions. Bedrock embedding and reranking are configurable but not yet
+implemented; the default embedder is the local one.
 
-- **Phase 0 — skeleton (this repo).** retrieval-api runnable against a local corpus,
-  the eval gate live and able to fail, Terraform for the three planes validated,
-  the full pipeline green in GitHub Actions.
-- **Phase 1 — the point.** Bedrock embed + rerank wired in; golden set grown; the
-  bad-corpus demo captured end to end.
-- **Phase 2 — the forks.** Self-hosted GPU inference (Packer enters here as the
-  cold-start fix); FirnTel as a trace backend; LLM-judge experiments.
-
-See [docs/DESIGN.md](docs/DESIGN.md) for the full design, conventions, and guardrails.
+Design notes, conventions, and guardrails are in [docs/DESIGN.md](docs/DESIGN.md).

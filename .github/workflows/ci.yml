@@ -140,7 +140,7 @@ jobs:
         run: |
           echo "Eval gate and infra gates passed on main."
           if [ -z "${{ secrets.AWS_DEPLOY_ROLE_ARN }}" ]; then
-            echo "No AWS deploy role configured — skipping live apply/promote (Phase 1+)."
+            echo "No AWS deploy role configured — skipping live apply/promote (configure a deploy role to enable)."
           else
             echo "Would assume ${{ secrets.AWS_DEPLOY_ROLE_ARN }} and roll out to prod here."
           fi
