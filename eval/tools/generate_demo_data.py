@@ -9,7 +9,7 @@ This script is the source of truth for three committed artifacts:
 
 Keeping them generated from one place means the golden set can never drift out of
 sync with the corpus by accident. The output files are committed and reviewed like
-code (CLAUDE.md, "Eval gate"); regenerate with:
+code (docs/DESIGN.md, "Eval gate"); regenerate with:
 
     python eval/tools/generate_demo_data.py
 

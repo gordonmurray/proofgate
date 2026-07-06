@@ -1,7 +1,7 @@
 # Provider and Terraform version constraints, plus remote state.
 #
 # Remote state lives in S3 with native lockfile-based locking (use_lockfile),
-# per CLAUDE.md: "Remote state in S3 with locking. No ad-hoc console changes."
+# per docs/DESIGN.md: "Remote state in S3 with locking. No ad-hoc console changes."
 # The backend is configured with -backend-config at init time so the bucket name
 # is not hard-coded here; CI passes it in. `terraform validate` in CI runs with
 # -backend=false, so no real bucket is needed to check syntax.

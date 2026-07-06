@@ -1,7 +1,7 @@
 """Hybrid retrieval over the in-memory corpus.
 
 This is the local stand-in for Firn on S3. It combines two planes, exactly like
-the production path in CLAUDE.md:
+the production path in docs/DESIGN.md:
 
   - Vector search: cosine similarity between the query embedding and each
     document embedding.

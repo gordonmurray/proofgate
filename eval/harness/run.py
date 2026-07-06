@@ -63,19 +63,36 @@ class Report:
 
 
 def load_golden(path: Path) -> List[dict]:
-    """Load the golden set from JSONL.
+    """Load and validate the golden set from JSONL.
+
+    Each row must have a non-empty ``query`` and a non-empty ``relevant_ids``. This
+    is enforced here so a malformed or typoed golden row cannot silently become an
+    empty-relevance query, which recall@k would score as a perfect 1.0 and thereby
+    inflate the gate result.
 
     Args:
         path: Path to ``golden.jsonl``.
 
     Returns:
-        The list of golden query rows.
+        The list of validated golden query rows.
+
+    Raises:
+        ValueError: If a row is missing its query or has empty ``relevant_ids``.
     """
     rows: List[dict] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         line = line.strip()
-        if line:
-            rows.append(json.loads(line))
+        if not line:
+            continue
+        row = json.loads(line)
+        if not row.get("query"):
+            raise ValueError(f"{path}:{lineno} golden row missing a non-empty 'query'")
+        if not row.get("relevant_ids"):
+            raise ValueError(
+                f"{path}:{lineno} golden row has empty 'relevant_ids'; every query "
+                "must have at least one relevant id"
+            )
+        rows.append(row)
     return rows
 
 

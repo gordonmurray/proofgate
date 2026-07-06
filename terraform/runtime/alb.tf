@@ -1,6 +1,6 @@
 # Application Load Balancer. TLS terminates here; HTTP redirects to HTTPS. A
 # single listener rule routes /search* to the retrieval-api target group. Note
-# the singular `condition`/`action` blocks (CLAUDE.md > Terraform conventions).
+# the singular `condition`/`action` blocks (docs/DESIGN.md > Terraform conventions).
 
 resource "aws_security_group" "alb" {
   name        = "${local.name}-alb"
@@ -39,7 +39,7 @@ resource "aws_vpc_security_group_egress_rule" "alb_to_tasks" {
 }
 
 resource "aws_lb" "this" {
-  # checkov:skip=CKV2_AWS_28:WAF association is a Phase 2 hardening step (see CLAUDE.md phasing); the skeleton ships without it.
+  # checkov:skip=CKV2_AWS_28:WAF association is a Phase 2 hardening step (see docs/DESIGN.md phasing); the skeleton ships without it.
   name                       = "${local.name}-alb"
   load_balancer_type         = "application"
   security_groups            = [aws_security_group.alb.id]

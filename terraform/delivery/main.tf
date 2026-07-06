@@ -1,6 +1,6 @@
 # Delivery plane: the ECR repository the pipeline pushes to, and the IAM role
 # GitHub Actions assumes via OIDC. No long-lived cloud keys live in CI
-# (CLAUDE.md > IAM: "the pipeline assumes a scoped deploy role via OIDC").
+# (docs/DESIGN.md > IAM: "the pipeline assumes a scoped deploy role via OIDC").
 
 locals {
   name = "${var.project}-${var.environment}"
@@ -22,6 +22,7 @@ variable "github_repository" {
 }
 
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 # ---- ECR -------------------------------------------------------------------
 
@@ -75,17 +76,14 @@ data "aws_iam_policy_document" "github_assume" {
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
-    # Scope the trust to the deploy paths only — the main branch and the
-    # staging/prod GitHub environments — not `repo:owner/repo:*`, which would let
-    # any workflow on any branch with id-token:write assume the deploy role.
+    # Scope the trust to the main branch only — not `repo:owner/repo:*`, which would
+    # let any workflow on any branch with id-token:write assume the deploy role. The
+    # deploy job runs on push to main; add protected GitHub environments here later
+    # if deploys move behind an environment gate.
     condition {
-      test     = "StringLike"
+      test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:${var.github_repository}:ref:refs/heads/main",
-        "repo:${var.github_repository}:environment:staging",
-        "repo:${var.github_repository}:environment:prod",
-      ]
+      values   = ["repo:${var.github_repository}:ref:refs/heads/main"]
     }
   }
 }
@@ -120,11 +118,20 @@ data "aws_iam_policy_document" "deploy" {
     ]
     resources = [aws_ecr_repository.api.arn]
   }
+  # RegisterTaskDefinition is not resource-scopable and must stay on "*".
   statement {
-    sid       = "EcsDeploy"
+    sid       = "EcsRegisterTaskDef"
     effect    = "Allow"
-    actions   = ["ecs:UpdateService", "ecs:DescribeServices", "ecs:RegisterTaskDefinition"]
+    actions   = ["ecs:RegisterTaskDefinition"]
     resources = ["*"]
+  }
+  # Service mutations are scoped to this project's services so a compromised CI
+  # token cannot touch unrelated ECS services in the account.
+  statement {
+    sid       = "EcsServiceDeploy"
+    effect    = "Allow"
+    actions   = ["ecs:UpdateService", "ecs:DescribeServices"]
+    resources = ["arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:service/${var.project}-*/${var.project}-*"]
   }
   # RegisterTaskDefinition must pass the task + execution roles to ECS. Scoped to
   # this project's roles and constrained to the ECS tasks service so it cannot be

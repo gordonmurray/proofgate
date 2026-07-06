@@ -1,4 +1,4 @@
-# Three-plane composition (CLAUDE.md > Architecture).
+# Three-plane composition (docs/DESIGN.md > Architecture).
 #
 #   runtime       the request path: VPC, ALB, ECS Fargate, Firn's S3 bucket
 #   delivery      what ships it: ECR + the GitHub OIDC deploy role

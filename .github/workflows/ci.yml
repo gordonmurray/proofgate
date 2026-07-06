@@ -1,7 +1,7 @@
 # proofgate delivery pipeline (GitHub Actions).
 #
 # This is the whole point of the project rendered as CI: the same six stages from
-# CLAUDE.md, with stage 5 (the eval gate) able to actually fail the build and
+# docs/DESIGN.md, with stage 5 (the eval gate) able to actually fail the build and
 # block promotion. Stages that need live AWS (apply, promote) are structurally
 # present but guarded on credentials so the public pipeline stays green.
 #

@@ -1,7 +1,7 @@
 """Runtime configuration, sourced entirely from the environment.
 
 The same image runs in staging and prod; only the environment differs. The two
-deliberate forks from CLAUDE.md (Bedrock vs self-hosted inference) are selected
+deliberate forks from docs/DESIGN.md (Bedrock vs self-hosted inference) are selected
 here via ``PROOFGATE_EMBEDDER`` / ``PROOFGATE_RERANKER`` rather than decided at build time.
 """
 
