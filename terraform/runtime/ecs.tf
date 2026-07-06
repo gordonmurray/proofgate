@@ -53,11 +53,13 @@ resource "aws_ecs_task_definition" "api" {
         containerPort = var.container_port
         protocol      = "tcp"
       }]
+      # OTEL_EXPORTER_OTLP_ENDPOINT is intentionally unset in Phase 0: the app
+      # still creates spans, but there is no collector sidecar to export to yet.
+      # It is set once the OTel Collector sidecar lands with the observability wiring.
       environment = [
         { name = "PROOFGATE_ENV", value = var.environment },
         { name = "PROOFGATE_EMBEDDER", value = var.embedder },
-        { name = "OTEL_SERVICE_NAME", value = "retrieval-api" },
-        { name = "OTEL_EXPORTER_OTLP_ENDPOINT", value = "http://localhost:4317" }
+        { name = "OTEL_SERVICE_NAME", value = "retrieval-api" }
       ]
       logConfiguration = {
         logDriver = "awslogs"

@@ -67,7 +67,12 @@ variable "github_repository" {
 }
 
 variable "embedder" {
-  description = "Embedder fork for the task: 'local' or 'bedrock'."
+  description = "Embedder fork for the task: 'local' or 'bedrock'. Defaults to 'local'; 'bedrock' is wired in Phase 1 once the Bedrock embedder is implemented."
   type        = string
-  default     = "bedrock"
+  default     = "local"
+
+  validation {
+    condition     = contains(["local", "bedrock"], var.embedder)
+    error_message = "embedder must be 'local' or 'bedrock'."
+  }
 }

@@ -75,10 +75,17 @@ data "aws_iam_policy_document" "github_assume" {
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
+    # Scope the trust to the deploy paths only — the main branch and the
+    # staging/prod GitHub environments — not `repo:owner/repo:*`, which would let
+    # any workflow on any branch with id-token:write assume the deploy role.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:*"]
+      values = [
+        "repo:${var.github_repository}:ref:refs/heads/main",
+        "repo:${var.github_repository}:environment:staging",
+        "repo:${var.github_repository}:environment:prod",
+      ]
     }
   }
 }
