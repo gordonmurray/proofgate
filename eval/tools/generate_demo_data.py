@@ -70,14 +70,14 @@ TOPICS: List[Topic] = [
     (
         "ecs",
         [
-            ("ECS Fargate service", "retrieval-api runs as an ECS Fargate service so there are no EC2 hosts to patch in phase 1; the platform manages the underlying capacity."),
+            ("ECS Fargate service", "retrieval-api runs as an ECS Fargate service so there are no EC2 hosts to patch; the platform manages the underlying capacity."),
             ("Task definition", "The task definition pins CPU and memory, the container image tag, and the environment variables that select the embedder and reranker forks."),
             ("Rolling deploys", "The service uses a rolling deployment with a minimum healthy percent so a new revision is validated by health checks before the old one is stopped."),
             ("Autoscaling", "Target-tracking autoscaling adds tasks when average CPU or request count per target crosses a threshold, keeping p99 latency inside the SLO under load."),
             ("Task role", "Each task assumes an IAM task role scoped to exactly the S3 prefix and Bedrock models it needs, nothing more."),
         ],
         [
-            ("why are there no servers to patch in phase 1", [0], "fargate"),
+            ("why are there no servers to patch", [0], "fargate"),
             ("how does the service scale under load", [3], "autoscaling"),
             ("where are the embedder and reranker selected", [1], "task def env"),
             ("how is a new revision rolled out safely", [2], "rolling deploy"),
@@ -103,8 +103,8 @@ TOPICS: List[Topic] = [
         "embeddings",
         [
             ("Query embedding", "Each incoming query is embedded into a dense vector before the vector search runs; the same model embeds the documents at index time."),
-            ("Bedrock embeddings", "In phase 1 the embedder calls Amazon Bedrock; the model id is configuration, so switching models never requires a code change."),
-            ("Self-hosted embeddings", "Phase 2 can move embedding onto a GPU EC2 instance behind the same embedder interface, trading per-call cost for cold-start complexity."),
+            ("Bedrock embeddings", "The embedder can call Amazon Bedrock; the model id is configuration, so switching models never requires a code change."),
+            ("Self-hosted embeddings", "Embedding can move onto a GPU EC2 instance behind the same embedder interface, trading per-call cost for cold-start complexity."),
             ("Embedder as a fork", "Bedrock versus self-hosted inference is a deliberate fork kept addressable by an environment variable rather than decided prematurely."),
             ("Embedding dimensionality", "Higher-dimensional embeddings capture more nuance but cost more memory in the foyer cache; the dimension is tuned against the eval gate."),
         ],
@@ -119,7 +119,7 @@ TOPICS: List[Topic] = [
         "reranking",
         [
             ("Rerank pass", "After hybrid retrieval, an optional rerank pass reorders the top candidates with a stronger cross-encoder before the response is returned."),
-            ("Bedrock reranker", "The phase 1 reranker is a Bedrock model; like the embedder it is selected by configuration so the fork stays open."),
+            ("Bedrock reranker", "The reranker can be a Bedrock model; like the embedder it is selected by configuration so the fork stays open."),
             ("Rerank window", "Reranking runs only over a small candidate window from the first-stage retrieval, keeping the extra latency bounded."),
             ("Rerank and latency", "Because reranking adds a model call it is measured against the p99 SLO; it is only enabled when the quality gain justifies the latency."),
             ("Identity reranker", "Until the real reranker is wired, an identity pass preserves ordering so the rerank code path and its span are exercised end to end."),

@@ -20,9 +20,9 @@ gate and refuse to promote.
 
 ```
 Client -> ALB -> ECS Fargate: retrieval-api (orchestration)
-    |- embed query  -> local hashing embedder (phase 0)  OR  Bedrock (phase 1)
+    |- embed query  -> local hashing embedder (default)  OR  Bedrock (optional)
     |- vector + FTS -> Firn on S3 (foyer cache is internal to Firn)
-    |- rerank       -> identity (phase 0)  OR  Bedrock (phase 1)
+    |- rerank       -> identity (default)  OR  Bedrock (optional)
  -> ranked response
 ```
 
@@ -34,7 +34,7 @@ story is a Firn-internal property, not bolted-on infrastructure. Do not add Elas
 ```
 1 validate/fmt   ruff + terraform fmt + validate      <- code + infra gate
 2 policy scan    checkov (tfsec / trivy optional)      <- infra gate
-3 build          docker image (+ packer AMI in phase 2)
+3 build          docker image
 4 apply          -> staging (guarded on AWS creds)
 5 eval gate      recall@k, p99 SLO, optional LLM-judge <- quality gate
 6 promote        -> prod, only if 5 passes
@@ -73,17 +73,15 @@ emitted as metrics, so retrieval quality is graphable over time, not just pass/f
 - **The demo:** a branch with a deliberately bad corpus fails stage 5 visibly. See
   [eval-gate-demo.md](eval-gate-demo.md).
 
-## Phasing
+## Status and open choices
 
-- **Phase 0 — skeleton.** Terraform for VPC, ALB, ECS; retrieval-api runnable against a
-  local corpus; the pipeline green in CI; the eval gate live and able to fail.
-- **Phase 1 — the point.** Bedrock embed and rerank wired in; golden set v1; the
-  bad-corpus demo captured end to end.
-- **Phase 2 — the forks.** Self-hosted inference on GPU EC2 (Packer enters here as the
-  cold-start fix); FirnTel as the trace backend option; LLM-judge experiments.
+The current code runs retrieval-api against a local corpus, with the eval gate live and
+able to fail, the three Terraform modules validating, and the pipeline green in CI.
+Bedrock embedding and reranking are configurable seams but not yet implemented, so the
+default embedder is the local one.
 
-Two deliberate forks are kept addressable via config rather than decided prematurely:
-Bedrock vs self-hosted inference, and Tempo vs FirnTel as the trace backend.
+Two choices are kept addressable via config rather than fixed in code: Bedrock versus
+self-hosted inference, and Tempo versus FirnTel as the trace backend.
 
 ## Conventions
 
@@ -110,10 +108,10 @@ Bedrock vs self-hosted inference, and Tempo vs FirnTel as the trace backend.
 
 ## Guardrails
 
-No Ansible. No ElastiCache. No Packer before Phase 2. Each was cut deliberately, not
-forgotten: Ansible has no natural home in a containerised architecture, caching belongs
-inside Firn, and Packer only earns its place as the Phase 2 cold-start fix. If one of
-these seems needed, write the proposal first.
+No Ansible. No ElastiCache. No Packer until self-hosted inference is added. Each was cut
+deliberately, not forgotten: Ansible has no natural home in a containerised architecture,
+caching belongs inside Firn, and Packer only earns its place as a cold-start fix for
+self-hosted GPU inference. If one of these seems needed, write the proposal first.
 
 ## Tooling
 

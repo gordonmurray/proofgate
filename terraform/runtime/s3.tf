@@ -10,7 +10,7 @@ data "aws_elb_service_account" "main" {}
 resource "aws_s3_bucket" "corpus" {
   # checkov:skip=CKV_AWS_144:Cross-region replication is out of scope for a single-region reference deployment.
   # checkov:skip=CKV2_AWS_62:No S3 event consumers in this design; Firn reads objects directly.
-  # checkov:skip=CKV_AWS_18:Access logging for the corpus bucket is a Phase 2 concern; not applied in the skeleton.
+  # checkov:skip=CKV_AWS_18:Access logging for the corpus bucket is deferred; not applied here.
   bucket = "${local.name}-corpus-${data.aws_caller_identity.current.account_id}"
 }
 

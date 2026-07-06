@@ -4,7 +4,7 @@
 #   Application logs -> CloudWatch log group
 #
 # The trace backend (Tempo vs FirnTel) is the second deliberate fork and is a
-# Phase 2 decision; it is not created here. Grafana points at the Prometheus
+# deferred decision; it is not created here. Grafana points at the Prometheus
 # workspace below to graph request rate, latency, and eval-gate recall over time.
 
 variable "project" {
@@ -23,7 +23,7 @@ locals {
 
 resource "aws_cloudwatch_log_group" "api" {
   # checkov:skip=CKV_AWS_338:1-year retention is a cost/compliance decision deferred past the reference deployment.
-  # checkov:skip=CKV_AWS_158:A dedicated CMK for log groups is Phase 2 hardening; default encryption applies today.
+  # checkov:skip=CKV_AWS_158:A dedicated CMK for log groups is planned hardening; default encryption applies today.
   name              = "/${local.name}/retrieval-api"
   retention_in_days = 30
 }

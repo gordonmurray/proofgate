@@ -53,7 +53,7 @@ resource "aws_ecs_task_definition" "api" {
         containerPort = var.container_port
         protocol      = "tcp"
       }]
-      # OTEL_EXPORTER_OTLP_ENDPOINT is intentionally unset in Phase 0: the app
+      # OTEL_EXPORTER_OTLP_ENDPOINT is intentionally unset for now: the app
       # still creates spans, but there is no collector sidecar to export to yet.
       # It is set once the OTel Collector sidecar lands with the observability wiring.
       environment = [

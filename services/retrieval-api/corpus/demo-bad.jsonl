@@ -7,7 +7,7 @@
 {"id": "alb-01", "title": "Target group health", "text": "The target group health check hits /health; unhealthy tasks are drained and replaced before they receive traffic.", "topic": "alb"}
 {"id": "alb-02", "title": "HTTPS redirect", "text": "An HTTP listener redirects every request to HTTPS so no query is ever served over plaintext.", "topic": "alb"}
 {"id": "alb-03", "title": "Deregistration delay", "text": "A short deregistration delay lets in-flight searches finish during a deploy before a task is removed from the target group.", "topic": "alb"}
-{"id": "alb-04", "title": "ECS Fargate service", "text": "retrieval-api runs as an ECS Fargate service so there are no EC2 hosts to patch in phase 1; the platform manages the underlying capacity.", "topic": "ecs"}
+{"id": "alb-04", "title": "ECS Fargate service", "text": "retrieval-api runs as an ECS Fargate service so there are no EC2 hosts to patch; the platform manages the underlying capacity.", "topic": "ecs"}
 {"id": "ecs-00", "title": "Task definition", "text": "The task definition pins CPU and memory, the container image tag, and the environment variables that select the embedder and reranker forks.", "topic": "ecs"}
 {"id": "ecs-01", "title": "Rolling deploys", "text": "The service uses a rolling deployment with a minimum healthy percent so a new revision is validated by health checks before the old one is stopped.", "topic": "ecs"}
 {"id": "ecs-02", "title": "Autoscaling", "text": "Target-tracking autoscaling adds tasks when average CPU or request count per target crosses a threshold, keeping p99 latency inside the SLO under load.", "topic": "ecs"}
@@ -18,12 +18,12 @@
 {"id": "firn_s3-02", "title": "Corpus objects", "text": "Documents, their embeddings, and the inverted index are written as immutable objects; a new corpus version is a new set of objects, never an in-place edit.", "topic": "firn_s3"}
 {"id": "firn_s3-03", "title": "Cold reads", "text": "On a cache miss Firn reads segments from S3 and warms the foyer cache, so the first query after a deploy is slower than the steady state.", "topic": "firn_s3"}
 {"id": "firn_s3-04", "title": "Query embedding", "text": "Each incoming query is embedded into a dense vector before the vector search runs; the same model embeds the documents at index time.", "topic": "embeddings"}
-{"id": "embeddings-00", "title": "Bedrock embeddings", "text": "In phase 1 the embedder calls Amazon Bedrock; the model id is configuration, so switching models never requires a code change.", "topic": "embeddings"}
-{"id": "embeddings-01", "title": "Self-hosted embeddings", "text": "Phase 2 can move embedding onto a GPU EC2 instance behind the same embedder interface, trading per-call cost for cold-start complexity.", "topic": "embeddings"}
+{"id": "embeddings-00", "title": "Bedrock embeddings", "text": "The embedder can call Amazon Bedrock; the model id is configuration, so switching models never requires a code change.", "topic": "embeddings"}
+{"id": "embeddings-01", "title": "Self-hosted embeddings", "text": "Embedding can move onto a GPU EC2 instance behind the same embedder interface, trading per-call cost for cold-start complexity.", "topic": "embeddings"}
 {"id": "embeddings-02", "title": "Embedder as a fork", "text": "Bedrock versus self-hosted inference is a deliberate fork kept addressable by an environment variable rather than decided prematurely.", "topic": "embeddings"}
 {"id": "embeddings-03", "title": "Embedding dimensionality", "text": "Higher-dimensional embeddings capture more nuance but cost more memory in the foyer cache; the dimension is tuned against the eval gate.", "topic": "embeddings"}
 {"id": "embeddings-04", "title": "Rerank pass", "text": "After hybrid retrieval, an optional rerank pass reorders the top candidates with a stronger cross-encoder before the response is returned.", "topic": "reranking"}
-{"id": "reranking-00", "title": "Bedrock reranker", "text": "The phase 1 reranker is a Bedrock model; like the embedder it is selected by configuration so the fork stays open.", "topic": "reranking"}
+{"id": "reranking-00", "title": "Bedrock reranker", "text": "The reranker can be a Bedrock model; like the embedder it is selected by configuration so the fork stays open.", "topic": "reranking"}
 {"id": "reranking-01", "title": "Rerank window", "text": "Reranking runs only over a small candidate window from the first-stage retrieval, keeping the extra latency bounded.", "topic": "reranking"}
 {"id": "reranking-02", "title": "Rerank and latency", "text": "Because reranking adds a model call it is measured against the p99 SLO; it is only enabled when the quality gain justifies the latency.", "topic": "reranking"}
 {"id": "reranking-03", "title": "Identity reranker", "text": "Until the real reranker is wired, an identity pass preserves ordering so the rerank code path and its span are exercised end to end.", "topic": "reranking"}
