@@ -1,0 +1,24 @@
+# Eval-gate thresholds.
+#
+# These are the quality and latency contracts the pipeline enforces at stage 5.
+# Changing them is a deliberate act and goes through PR review like code.
+# The baseline recall value itself lives in baseline.json and moves only via a
+# dedicated PR — never auto-ratcheted from a passing run.
+
+[recall]
+# Headline metric: macro-averaged recall@10 over the golden set.
+metric = "recall@10"
+# Absolute floor. Recall may never drop below this, regardless of the baseline.
+floor = 0.80
+# Maximum allowed drop versus the committed baseline (baseline.json).
+# Catches regressions that are still above the floor.
+max_drop = 0.05
+
+[latency]
+# p99 SLO in milliseconds, measured warm from the load run against staging.
+p99_slo_ms = 750
+
+[load]
+# Fixed, repeatable load run used to build the latency distribution.
+total_requests = 200
+concurrency = 8

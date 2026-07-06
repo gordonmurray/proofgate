@@ -1,0 +1,6 @@
+{
+  "recall_at_10": 0.90,
+  "corpus": "demo.jsonl",
+  "embedder": "local",
+  "notes": "Committed baseline. Moves ONLY via a deliberate PR, never auto-ratcheted from a passing run. See CLAUDE.md > Eval gate."
+}
