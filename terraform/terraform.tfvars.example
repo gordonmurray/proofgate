@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars and fill in per environment. Never commit real values.
+project           = "neve"
+environment       = "staging"
+region            = "eu-west-1"
+vpc_cidr          = "10.20.0.0/16"
+az_count          = 3
+container_image   = "<account>.dkr.ecr.eu-west-1.amazonaws.com/neve-retrieval-api:latest"
+container_port    = 8080
+desired_count     = 2
+certificate_arn   = "arn:aws:acm:eu-west-1:<account>:certificate/<id>"
+github_repository = "gordonmurray/neve"
+embedder          = "bedrock"

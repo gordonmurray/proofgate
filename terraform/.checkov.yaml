@@ -1,0 +1,10 @@
+# Checkov configuration for the infra policy gate (pipeline stage 2).
+#
+# Suppressions live inline on the resources (grep for "checkov:skip") so each one
+# is justified next to the code it applies to, not hidden in a global allow-list.
+# This file only controls how checkov runs.
+framework:
+  - terraform
+compact: true
+quiet: true
+download-external-modules: false
