@@ -98,7 +98,7 @@ jobs:
     env:
       # The bad-corpus demo branch flips this to corpus/demo-bad.jsonl to make the
       # gate fail visibly. See docs/eval-gate-demo.md.
-      CORPUS: services/retrieval-api/corpus/demo.jsonl
+      CORPUS: services/retrieval-api/corpus/demo-bad.jsonl
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
