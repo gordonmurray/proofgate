@@ -1,0 +1,146 @@
+# proofgate delivery pipeline (GitHub Actions).
+#
+# This is the whole point of the project rendered as CI: the same six stages from
+# CLAUDE.md, with stage 5 (the eval gate) able to actually fail the build and
+# block promotion. Stages that need live AWS (apply, promote) are structurally
+# present but guarded on credentials so the public pipeline stays green.
+#
+#   1 validate/fmt   ruff + terraform fmt/validate      -> jobs: lint-test, terraform
+#   2 policy scan    checkov                            -> job:  policy-scan
+#   3 build          docker image                       -> job:  docker-build
+#   4 apply staging  (guarded on AWS creds)             -> job:  promote (deploy step)
+#   5 eval gate      recall@10 + p99 SLO                -> job:  eval-gate   <-- the point
+#   6 promote        prod, only if 5 passes             -> job:  promote
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # --- Stage 1: lint + unit tests (quality of the code itself) --------------
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install service (+ dev deps)
+        run: pip install -e "services/retrieval-api[dev]"
+      - name: Ruff lint
+        run: ruff check services/retrieval-api eval
+      - name: Unit tests (retrieval-api)
+        working-directory: services/retrieval-api
+        run: pytest -q
+      - name: Unit tests (eval harness)
+        run: pytest -q eval/harness/tests
+      - name: Golden data is in sync with the generator
+        run: |
+          python eval/tools/generate_demo_data.py
+          git diff --exit-code -- services/retrieval-api/corpus eval/golden.jsonl \
+            || (echo "::error::Generated demo data is out of sync. Re-run the generator and commit." && exit 1)
+
+  # --- Stage 1: terraform fmt + validate ------------------------------------
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+      - name: Format check
+        run: terraform -chdir=terraform fmt -check -recursive
+      - name: Init (no backend)
+        run: terraform -chdir=terraform init -backend=false -input=false
+      - name: Validate
+        run: terraform -chdir=terraform validate -no-color
+
+  # --- Stage 2: infra policy scan -------------------------------------------
+  policy-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform
+          config_file: terraform/.checkov.yaml
+          quiet: true
+
+  # --- Stage 3: build the runtime image -------------------------------------
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: lint-test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build retrieval-api image
+        run: docker build -t retrieval-api:${{ github.sha }} services/retrieval-api
+
+  # --- Stage 5: THE EVAL GATE -----------------------------------------------
+  # Starts the service against a corpus and runs the golden set through the real
+  # HTTP path. Fails the build (and blocks promotion) on any recall/latency breach.
+  eval-gate:
+    runs-on: ubuntu-latest
+    needs: lint-test
+    env:
+      # The bad-corpus demo branch flips this to corpus/demo-bad.jsonl to make the
+      # gate fail visibly. See docs/eval-gate-demo.md.
+      CORPUS: services/retrieval-api/corpus/demo.jsonl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install service
+        run: pip install -e services/retrieval-api
+      - name: Start retrieval-api
+        run: |
+          PROOFGATE_CORPUS_PATH="$CORPUS" \
+            python -m uvicorn app.main:app --host 127.0.0.1 --port 8080 \
+            --app-dir services/retrieval-api &
+          echo "SERVER_PID=$!" >> "$GITHUB_ENV"
+      - name: Run eval gate
+        run: |
+          python -m eval.harness.run \
+            --endpoint http://127.0.0.1:8080 \
+            --report eval-report.json
+      - name: Stop retrieval-api
+        if: always()
+        run: kill "$SERVER_PID" 2>/dev/null || true
+      - name: Upload eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: eval-report.json
+
+  # --- Stage 6: promote (guarded) -------------------------------------------
+  # Runs only on main and only when the eval gate (and the infra gates) passed.
+  # The actual apply/deploy is guarded on AWS creds so the reference repo is safe
+  # to run publicly; the dependency wiring is the contract that matters.
+  promote:
+    runs-on: ubuntu-latest
+    needs: [eval-gate, terraform, policy-scan, docker-build]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Promotion decision
+        run: |
+          echo "Eval gate and infra gates passed on main."
+          if [ -z "${{ secrets.AWS_DEPLOY_ROLE_ARN }}" ]; then
+            echo "No AWS deploy role configured — skipping live apply/promote (Phase 1+)."
+          else
+            echo "Would assume ${{ secrets.AWS_DEPLOY_ROLE_ARN }} and roll out to prod here."
+          fi

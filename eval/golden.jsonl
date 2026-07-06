@@ -1,0 +1,50 @@
+{"query": "how many availability zones does the network use", "relevant_ids": ["vpc-00", "vpc-04"], "notes": "AZ spread"}
+{"query": "how do private tasks reach the internet for image pulls", "relevant_ids": ["vpc-01"], "notes": "NAT egress"}
+{"query": "how is S3 traffic kept off the public internet", "relevant_ids": ["vpc-03"], "notes": "VPC endpoints"}
+{"query": "what CIDR block size does the VPC use", "relevant_ids": ["vpc-02"], "notes": "CIDR sizing"}
+{"query": "how does the load balancer check if a task is healthy", "relevant_ids": ["alb-02"], "notes": "health check"}
+{"query": "how are requests routed to the search service", "relevant_ids": ["alb-01"], "notes": "listener rules"}
+{"query": "is traffic forced onto TLS", "relevant_ids": ["alb-00", "alb-03"], "notes": "HTTPS"}
+{"query": "what happens to in-flight requests during a deploy", "relevant_ids": ["alb-04"], "notes": "deregistration"}
+{"query": "why are there no servers to patch in phase 1", "relevant_ids": ["ecs-00"], "notes": "fargate"}
+{"query": "how does the service scale under load", "relevant_ids": ["ecs-03"], "notes": "autoscaling"}
+{"query": "where are the embedder and reranker selected", "relevant_ids": ["ecs-01"], "notes": "task def env"}
+{"query": "how is a new revision rolled out safely", "relevant_ids": ["ecs-02"], "notes": "rolling deploy"}
+{"query": "where does the vector store keep its data", "relevant_ids": ["firn_s3-00", "firn_s3-03"], "notes": "S3 storage"}
+{"query": "what is the foyer cache", "relevant_ids": ["firn_s3-01"], "notes": "foyer"}
+{"query": "why is there no separate cache tier like ElastiCache", "relevant_ids": ["firn_s3-02"], "notes": "no elasticache"}
+{"query": "why is the first query after deploy slower", "relevant_ids": ["firn_s3-04"], "notes": "cold read"}
+{"query": "how is a query turned into a vector", "relevant_ids": ["embeddings-00"], "notes": "query embed"}
+{"query": "can the embedding model be swapped without code changes", "relevant_ids": ["embeddings-01", "embeddings-03"], "notes": "config-selected"}
+{"query": "what is the tradeoff of self-hosting embeddings", "relevant_ids": ["embeddings-02"], "notes": "gpu tradeoff"}
+{"query": "how is embedding dimension chosen", "relevant_ids": ["embeddings-04"], "notes": "dimensionality"}
+{"query": "what does the rerank stage do", "relevant_ids": ["reranking-00"], "notes": "rerank purpose"}
+{"query": "how is rerank latency kept bounded", "relevant_ids": ["reranking-02"], "notes": "window"}
+{"query": "when should reranking be turned on", "relevant_ids": ["reranking-03"], "notes": "latency tradeoff"}
+{"query": "is the reranker model configurable", "relevant_ids": ["reranking-01"], "notes": "config"}
+{"query": "why gate on quality instead of just health checks", "relevant_ids": ["eval_gate-00"], "notes": "the point"}
+{"query": "what does recall at 10 measure", "relevant_ids": ["eval_gate-01"], "notes": "recall"}
+{"query": "how is the baseline allowed to change", "relevant_ids": ["eval_gate-02"], "notes": "baseline policy"}
+{"query": "what makes the pipeline actually fail on a regression", "relevant_ids": ["eval_gate-04"], "notes": "non-zero exit"}
+{"query": "where does the golden set live", "relevant_ids": ["eval_gate-03"], "notes": "golden set"}
+{"query": "which latency percentile does the SLO use", "relevant_ids": ["latency-00", "latency-03"], "notes": "p99"}
+{"query": "is latency measured warm or cold", "relevant_ids": ["latency-01"], "notes": "warm"}
+{"query": "how is the latency distribution produced", "relevant_ids": ["latency-02"], "notes": "load run"}
+{"query": "can latency be tracked over time", "relevant_ids": ["latency-04"], "notes": "grafana metric"}
+{"query": "what emits a span in the service", "relevant_ids": ["tracing-00"], "notes": "spans everywhere"}
+{"query": "how do traces leave the application", "relevant_ids": ["tracing-01"], "notes": "collector"}
+{"query": "what are the two trace backend options", "relevant_ids": ["tracing-02"], "notes": "tempo vs firntel"}
+{"query": "how do otel and prometheus relate", "relevant_ids": ["tracing-04"], "notes": "layers not competitors"}
+{"query": "where are metrics stored and graphed", "relevant_ids": ["metrics-00", "metrics-01"], "notes": "prom + grafana"}
+{"query": "can retrieval quality be graphed over time", "relevant_ids": ["metrics-02"], "notes": "eval as metric"}
+{"query": "what triggers an alert", "relevant_ids": ["metrics-03"], "notes": "alerting"}
+{"query": "what dashboard method is used", "relevant_ids": ["metrics-04"], "notes": "RED"}
+{"query": "what are the ordered stages of the pipeline", "relevant_ids": ["cicd-00"], "notes": "stages"}
+{"query": "what gates promotion to production", "relevant_ids": ["cicd-02"], "notes": "promote gate"}
+{"query": "what infra checks run before build", "relevant_ids": ["cicd-01"], "notes": "policy scan"}
+{"query": "how is terraform state managed", "relevant_ids": ["cicd-03"], "notes": "remote state"}
+{"query": "how is the eval gate proven to work", "relevant_ids": ["cicd-04"], "notes": "bad corpus demo"}
+{"query": "how are permissions scoped for a task", "relevant_ids": ["iam-00"], "notes": "least privilege"}
+{"query": "how does CI authenticate to the cloud without stored keys", "relevant_ids": ["iam-01"], "notes": "oidc"}
+{"query": "where do secrets come from at runtime", "relevant_ids": ["iam-02"], "notes": "param store"}
+{"query": "what can reach the container port", "relevant_ids": ["iam-03"], "notes": "security groups"}
