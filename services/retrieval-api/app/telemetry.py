@@ -1,7 +1,7 @@
 """OpenTelemetry setup.
 
 Tracing is non-optional in this project: every operation that crosses a process
-boundary emits a span (CLAUDE.md, "Guardrails"). This module owns the tracer
+boundary emits a span (docs/DESIGN.md, "Guardrails"). This module owns the tracer
 provider so the rest of the app just calls ``get_tracer()``.
 
 Exporter behaviour:

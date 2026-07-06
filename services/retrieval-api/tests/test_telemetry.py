@@ -1,6 +1,6 @@
 """Tests that the request path is actually traced.
 
-Tracing is non-optional (CLAUDE.md), so it gets a test like any other behaviour:
+Tracing is non-optional (docs/DESIGN.md), so it gets a test like any other behaviour:
 a search must emit the downstream retrieval spans, not just the HTTP span.
 """
 

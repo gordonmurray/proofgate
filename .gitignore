@@ -24,3 +24,6 @@ eval-report.json
 *.swp
 .idea/
 .vscode/
+
+# Local development context, not part of the public project
+CLAUDE.md

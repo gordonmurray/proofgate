@@ -1,6 +1,6 @@
 """Query and document embedders.
 
-This is fork #1 from CLAUDE.md made concrete and config-selectable: Bedrock vs
+This is fork #1 from docs/DESIGN.md made concrete and config-selectable: Bedrock vs
 self-hosted inference. Phase 1 wires Bedrock; until then, and in CI where there
 are no cloud credentials, the ``local`` hashing embedder gives a deterministic,
 dependency-light vector so the whole retrieval path is exercisable offline.

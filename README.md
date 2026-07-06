@@ -89,7 +89,7 @@ proofgate/
 ## Quickstart
 
 Requires Python 3.11+. CLI tools (terraform, checkov) run via Docker — see
-[CLAUDE.md](CLAUDE.md) for the tooling convention.
+[docs/DESIGN.md](docs/DESIGN.md) for the tooling convention.
 
 ```bash
 make install          # install retrieval-api + dev deps
@@ -158,4 +158,4 @@ Bedrock vs self-hosted inference, and Tempo vs FirnTel for traces.
 - **Phase 2 — the forks.** Self-hosted GPU inference (Packer enters here as the
   cold-start fix); FirnTel as a trace backend; LLM-judge experiments.
 
-See [CLAUDE.md](CLAUDE.md) for the full design, conventions, and guardrails.
+See [docs/DESIGN.md](docs/DESIGN.md) for the full design, conventions, and guardrails.
